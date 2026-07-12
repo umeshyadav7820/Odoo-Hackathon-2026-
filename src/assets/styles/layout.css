@@ -1,0 +1,16 @@
+.app-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.main-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: rgba(7, 17, 31, 0.94);
+}
+
+.page-content {
+  padding: 24px;
+}
