@@ -11,12 +11,13 @@ import Reports from '../pages/Reports/Reports';
 import Profile from '../pages/Profile/Profile';
 import Login from '../pages/Login/Login';
 import NotFound from '../pages/NotFound/NotFound';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<MainLayout />}>
+      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="vehicles" element={<VehicleList />} />
         <Route path="drivers" element={<DriverList />} />

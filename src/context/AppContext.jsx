@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const AppContext = createContext(null);
 
@@ -141,6 +141,17 @@ const initialExpenses = [
   }
 ];
 
+const getStoredUser = () => {
+  if (typeof window === 'undefined') return null;
+  const storedUser = window.localStorage.getItem('transitops-user');
+  return storedUser ? JSON.parse(storedUser) : null;
+};
+
+const getStoredAuth = () => {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem('transitops-auth') === 'true';
+};
+
 export function AppProvider({ children }) {
   const [vehicles, setVehicles] = useState(initialVehicles);
   const [drivers, setDrivers] = useState(initialDrivers);
@@ -150,6 +161,46 @@ export function AppProvider({ children }) {
   const [expenses, setExpenses] = useState(initialExpenses);
   const [darkMode, setDarkMode] = useState(true);
   const [feedback, setFeedback] = useState('Fleet commands are ready for the next dispatch window.');
+  const [user, setUser] = useState(getStoredUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(getStoredAuth);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isAuthenticated && user) {
+      window.localStorage.setItem('transitops-auth', 'true');
+      window.localStorage.setItem('transitops-user', JSON.stringify(user));
+    } else {
+      window.localStorage.removeItem('transitops-auth');
+      window.localStorage.removeItem('transitops-user');
+    }
+  }, [isAuthenticated, user]);
+
+  const login = ({ email, password }) => {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const normalizedPassword = (password || '').trim();
+
+    if (normalizedEmail === 'admin@transitops.com' && normalizedPassword === 'TransitOps@2026') {
+      const sessionUser = {
+        id: 1,
+        name: 'Alex Morgan',
+        email: normalizedEmail,
+        role: 'Fleet Manager'
+      };
+      setUser(sessionUser);
+      setIsAuthenticated(true);
+      setFeedback(`Welcome back, ${sessionUser.name}.`);
+      return true;
+    }
+
+    setFeedback('Invalid credentials. Use admin@transitops.com / TransitOps@2026.');
+    return false;
+  };
+
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    setFeedback('You have been signed out.');
+  };
 
   const createTrip = (payload) => {
     const vehicle = vehicles.find((v) => v.id === Number(payload.vehicleId));
@@ -302,6 +353,8 @@ export function AppProvider({ children }) {
     expenses,
     darkMode,
     feedback,
+    user,
+    isAuthenticated,
     createTrip,
     dispatchTrip,
     completeTrip,
@@ -311,8 +364,10 @@ export function AppProvider({ children }) {
     addFuelLog,
     addExpense,
     toggleTheme,
+    login,
+    logout,
     setFeedback
-  }), [vehicles, drivers, trips, maintenanceRecords, fuelLogs, expenses, darkMode, feedback]);
+  }), [vehicles, drivers, trips, maintenanceRecords, fuelLogs, expenses, darkMode, feedback, user, isAuthenticated]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
